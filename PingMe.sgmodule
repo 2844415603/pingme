@@ -1,0 +1,38 @@
+#!name=PingMe 签到
+#!desc=PingMe 自动签到 + 视频奖励（http-request 抓参 + cron 定时签到），Shadowrocket 原生版，不依赖 Env 兼容层
+#!author=ZenmoFeiShi / fmz200 / mickeu → Shadowrocket 适配
+#!icon=https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme&wetalk.png
+#!category=签到
+#!system=ios
+#!date=2026-11-15 20:30:00
+#!tag=PingMe
+#
+# ---------------------------------------------------------------
+# 仓库：https://github.com/2844415603/pingme   （分支 main）
+# 本模块可直接导入：小火箭 → 配置 → + → 类型「模块」→ 粘贴本文件 raw 直链
+# https://raw.githubusercontent.com/2844415603/pingme/main/PingMe.sgmodule
+#
+# 若 raw.githubusercontent.com 拉不动（国内常见），把下面两条 script-path 的域名整体换成 jsDelivr：
+# https://cdn.jsdelivr.net/gh/2844415603/pingme@main/PingMeSigninSR.js
+# https://cdn.jsdelivr.net/gh/2844415603/pingme@main/PingMeCaptureSR.js
+# ---------------------------------------------------------------
+
+[Rule]
+# PingMe 接口走代理（策略名换成你配置里的：PROXY / DIRECT / 自建策略组名；不需要可整行删掉）
+DOMAIN,api.pingmeapp.net,PROXY
+
+[Script]
+# ① 抓参：拦截余额查询，把签名参数与请求头存到本地（键名 pingme_capture_v3）
+#    抓完一次就可以长期用；只想停掉抓参，把这一行整个注释掉最省事
+PingMe获取签到参数 = type=http-request, pattern=^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus, script-path=https://raw.githubusercontent.com/2844415603/pingme/main/PingMeCaptureSR.js, requires-body=false, max-size=-1, timeout=60
+
+# ② 定时签到：每天 08:30 和 20:30，改时间只改 cronexp（5 段：分 时 日 月 周，按 crontab 写法，不要加引号）
+PingMe签到 = type=cron, cronexp=30 8,20 * * *, script-path=https://raw.githubusercontent.com/2844415603/pingme/main/PingMeSigninSR.js, wake-system=true, timeout=300
+
+# 备选写法 A（部分版本认带引号的值）：把上面那条换成
+# PingMe签到 = type=cron, cronexp="30 8,20 * * *", script-path=https://raw.githubusercontent.com/2844415603/pingme/main/PingMeSigninSR.js, wake-system=true, timeout=300
+# 备选写法 B（老版本只认 cron 关键字式）：
+# PingMe签到 = cron "30 8,20 * * *", script-path=https://raw.githubusercontent.com/2844415603/pingme/main/PingMeSigninSR.js, wake-system=true, timeout=300
+
+[MITM]
+hostname = %APPEND% api.pingmeapp.net
